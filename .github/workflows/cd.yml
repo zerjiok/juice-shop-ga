@@ -36,14 +36,14 @@ jobs:
         run: |
           aws apprunner create-service \
             --service-name my-app \
-            --source-configuration imageRepository={repositoryUrl=${{ AWS_REGISTRY }}/${{ vars.AWS_REGISTRY_ALIAS }}/${{ vars.AWS_REPOSITORY }},imageIdentifier=${{ github.sha }}},imageRepositoryType=ECR \
+            --source-configuration imageRepository={repositoryUrl=${{ vars.AWS_REGISTRY }}/${{ vars.AWS_REGISTRY_ALIAS }}/${{ vars.AWS_REPOSITORY }},imageIdentifier=${{ github.sha }}},imageRepositoryType=ECR \
             --region ${{ vars.AWS_REGION }}
       - name: Actualizar app en AWS App Runner
         if: steps.revisar_servicio.outputs.servicio_existe == 'true'
         run: |
           aws apprunner update-service \
             --service-name my-app \
-            --source-configuration imageRepository={repositoryUrl=${{ AWS_REGISTRY }}/${{ vars.AWS_REGISTRY_ALIAS }}/${{ vars.AWS_REPOSITORY }},imageIdentifier=${{ github.sha }}},imageRepositoryType=ECR \
+            --source-configuration imageRepository={repositoryUrl=${{ vars.AWS_REGISTRY }}/${{ vars.AWS_REGISTRY_ALIAS }}/${{ vars.AWS_REPOSITORY }},imageIdentifier=${{ github.sha }}},imageRepositoryType=ECR \
             --region ${{ vars.AWS_REGION }}
 
   gcp:
