@@ -55,14 +55,20 @@ jobs:
       REGION: ${{ vars.GCP_REGION }}
     steps:
       - name: "Autenticar en GCP"
-        uses: google-github-actions/setup-gcloud@62d4898025f6041e16b1068643bfc5a696863587 #v1.1.0
+        uses: google-github-actions/auth@ef5d53e30bbcd8d0836f4288f5e50ff3e086997d #v1.0.0
         with:
-          project_id: ${{ env.PROJECT_ID }}
-          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          workload_identity_provider: ${{ env.PROJECT_ID }}
+          service_account: ${{ secrets.GCP_SA_KEY }}
+      - name: "Autenticar en Artifact Registry"
+        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a #v2 #v2.1.0
+        with:
+          registry: ${{ vars.GCP.REGISTRY}}
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}
       - name: "Desplegar en Cloud Run"
         uses: google-github-actions/deploy-cloudrun@9c01af28be5da14b228ba369b7700d22830b35b7 #v1.0.1
         with:
-          image: gcr.io/$PROJECT_ID/$SERVICE_NAME:latest
+          image: ${{ vars.GCP_REGION }}-${{ vars.GCP.REGISTRY}}/${{ vars.GCP_PROJECT_ID }}/${{ vars.GCP_REPOSITORY_NAME }}/${{ vars.GCP_IMAGE_NAME }}:latest
           region: ${{ env.REGION }}
           service: ${{ env.SERVICE_NAME }}S
 
@@ -75,11 +81,12 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
       - name: "Crear Azure Container Instance"
-        uses: azure/container-instances@v1
+        uses: Azure/aci-deploy@28cafb864979bc5b44cd1f3fd45522727eb5a3db #v1 #v1.1.3
         with:
           resource-group: ${{ vars.AZURE_RESOURCE_NAME }}
           name: ${{ VARS.AZURE_CONTAINER_INSTANCE_NAME}}
+          dns-name-label: ${{ vars.AZURE_DNS }}
           image: ${{ vars.AZURE_REGISTRY_NAME }}/${{ vars.AZURE_IMAGE_NAME }}:latest
-          cpu: 1
-          memory: 1.5
-          ports: 80
+          registry-username: ${{ secrets.AZURE_REGISTRY_USERNAME }}
+          registry-password: ${{ secrets.AZURE_REGISTRY_PASSWORD }}
+          location: ${{ vars.AZURE_REGION }}

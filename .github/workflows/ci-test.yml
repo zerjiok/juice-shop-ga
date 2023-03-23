@@ -2,7 +2,9 @@ name: "Flujo CI-Test"
 run-name: "Flujo CI - Test"
 on:
   push:
+    branches: [master]
   pull_request:
+    branches: [master]
 env:
   ANGULAR_CLI_VERSION: 13
 jobs:
@@ -162,8 +164,8 @@ jobs:
             NODE_ENV=quiet npm run test:server &&
             NODE_ENV=tutorial npm run test:server &&
             NODE_ENV=unsafe npm run test:server
-
   e2e:
+    if: github.repository == 'juice-shop/juice-shop' && github.event_name == 'push'
     runs-on: ubuntu-latest
     strategy:
       matrix:

@@ -65,8 +65,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
-      SERVICE_NAME: ${{ vars.GCP_SERVICE_NAME }}
-      REGION: ${{ vars.GCP_REGION }}
     steps:
       - name: "Checkout repositorio"
         uses: actions/checkout@24cb9080177205b6e8c946b17badbe402adc938f #v3: v3.4.0
@@ -84,13 +82,18 @@ jobs:
           echo "VCS_REF=`git rev-parse --short HEAD`" >> $GITHUB_ENV
           echo "BUILD_DATE=`date -u +”%Y-%m-%dT%H:%M:%SZ”`" >> $GITHUB_ENV
       - name: "Autenticar en GCP"
-        uses: google-github-actions/setup-gcloud@62d4898025f6041e16b1068643bfc5a696863587 #v1.1.0
+        id: auth
+        uses: google-github-actions/auth@ef5d53e30bbcd8d0836f4288f5e50ff3e086997d #v1.0.0
         with:
-          project_id: ${{ vars.GCP_PROJECT_ID }}
-          service_account_email: ${{ secrets.GCP_SA_EMAIL }}
-          service_account_key: ${{ secrets.GCP_SA_KEY }}
-          export_default_credentials: true
-
+          token_format: access_token
+          workload_identity_provider: ${{ env.PROJECT_ID }}
+          service_account: ${{ secrets.GCP_SA_KEY }}
+      - name: "Autenticar en Artifact Registry"
+        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a #v2 #v2.1.0
+        with:
+          registry: ${{ vars.GCP.REGISTRY}}
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}
       - name: "Compilar y Subir imagen de Docker"
         uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671 #v4 #v4.0.0
         with:
@@ -99,12 +102,10 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            gcr.io/${{ vars.GCP_PROJECT_ID }}/${{ vars.GCP_SERVICE_NAME }}:${{ env.DOCKER_TAG }}
+            ${{ vars.GCP_REGION }}-${{ vars.GCP.REGISTRY}}/${{ vars.GCP_PROJECT_ID }}/${{ vars.GCP_REPOSITORY_NAME }}/${{ vars.GCP_IMAGE_NAME }}:${{ env.DOCKER_TAG }}
           build-args: |
             VCS_REF=${{ env.VCS_REF }}
             BUILD_DATE=${{ env.BUILD_DATE }}
-          secrets: |
-            GCP_SA_KEY=${{ secrets.GCP_SA_KEY }}
 
   docker-azure:
     if: |
