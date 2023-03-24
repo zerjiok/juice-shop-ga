@@ -1,4 +1,4 @@
-name: Automatizar Lint
+name: Automatizar Formateo de archivos con Lint
 run-name: Lint automático
 on: [push]
 

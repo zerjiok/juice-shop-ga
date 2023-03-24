@@ -1,0 +1,9 @@
+{
+    "ServiceArn": "arn:aws:apprunner:us-east-1:115365964428:service/juice-shop/db0a7bdf8aff4121acc23485cee9fc8a",
+    "SourceConfiguration": {
+        "ImageRepository": {
+            "ImageIdentifier": "public.ecr.aws/platzidev/juice-shop:latest",
+            "ImageRepositoryType": "ECR_PUBLIC"
+        }
+    }
+} 
