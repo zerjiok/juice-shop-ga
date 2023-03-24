@@ -19,11 +19,21 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ vars.AWS_REGION }}
+      - name: Crear archivo de configuración para AppRunner
+        run:  |
+          echo '{
+            "ServiceArn": "${{ vars.AWS_APPRUNNER_ARN}}",
+            "SourceConfiguration": {
+                "ImageRepository": {
+                    "ImageIdentifier": "${{ vars.AWS_REGISTRY }}/${{ vars.AWS_REGISTRY_ALIAS }}/${{ vars.AWS_REPOSITORY }}:latest",
+                    "ImageRepositoryType": "ECR_PUBLIC"
+                }
+            }
+          }' > apprunner.json
       - name: Actualizar app en AWS App Runner
         run: |
           aws apprunner update-service \
-            --service-arn ${{ vars.AWS_APPRUNNER_ARN }} \
-            --source-configuration ImageRepository={ImageIdentifier=${{ vars.AWS_REGISTRY }}/${{ vars.AWS_REGISTRY_ALIAS }}/${{ vars.AWS_REPOSITORY }}:latest,ImageRepositoryType=ECR_PUBLIC}
+            --cli-input-json file://apprunner.json
 
   gcp:
     runs-on: ubuntu-latest
