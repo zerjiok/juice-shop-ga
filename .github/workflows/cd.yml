@@ -19,32 +19,11 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ vars.AWS_REGION }}
-      - name: Revisar si el servicio existe
-        id: revisar_servicio
-        run: |
-          status=$(aws apprunner describe-service \
-            --service-arn <SERVICE_ARN>\
-            --query "Service.Status"\
-            --output text || true)
-          if [ "$status" == "RUNNING" ]; then
-            echo "::set-output name=servicio_existe::true"
-          else
-            echo "::set-output name=servicio_existe::false"
-          fi
-      - name: Desplegar en AWS App Runner
-        if: steps.revisar_servicio.outputs.servicio_existe == 'false'
-        run: |
-          aws apprunner create-service \
-            --service-name my-app \
-            --source-configuration imageRepository={repositoryUrl=${{ vars.AWS_REGISTRY }}/${{ vars.AWS_REGISTRY_ALIAS }}/${{ vars.AWS_REPOSITORY }},imageIdentifier=${{ github.sha }}},imageRepositoryType=ECR \
-            --region ${{ vars.AWS_REGION }}
       - name: Actualizar app en AWS App Runner
-        if: steps.revisar_servicio.outputs.servicio_existe == 'true'
         run: |
           aws apprunner update-service \
-            --service-name my-app \
-            --source-configuration imageRepository={repositoryUrl=${{ vars.AWS_REGISTRY }}/${{ vars.AWS_REGISTRY_ALIAS }}/${{ vars.AWS_REPOSITORY }},imageIdentifier=${{ github.sha }}},imageRepositoryType=ECR \
-            --region ${{ vars.AWS_REGION }}
+            --service-arn ${{ vars.AWS_APPRUNNER_ARN }} \
+            --source-configuration ImageRepository={ImageIdentifier=${{ vars.AWS_REGISTRY }}/${{ vars.AWS_REGISTRY_ALIAS }}/${{ vars.AWS_REPOSITORY }}:latest,ImageRepositoryType=ECR_PUBLIC}
 
   gcp:
     runs-on: ubuntu-latest
@@ -70,7 +49,7 @@ jobs:
         with:
           image: ${{ vars.GCP_REGION }}-${{ vars.GCP.REGISTRY}}/${{ vars.GCP_PROJECT_ID }}/${{ vars.GCP_REPOSITORY_NAME }}/${{ vars.GCP_IMAGE_NAME }}:latest
           region: ${{ env.REGION }}
-          service: ${{ env.SERVICE_NAME }}S
+          service: ${{ env.SERVICE_NAME }}
 
   azure:
     runs-on: ubuntu-latest
